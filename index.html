@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NovelAI Image Metadata Extractor</title>
+    <style>
+       body, html {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica', sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 1.5em;
+            margin: 0;
+            color: #bb86fc;
+        }
+        #languageSelect {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #mainContainer, #infoContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #dropZone {
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+            border: 2px dashed #555;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            background-color: #1e1e1e;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        #dropZone:hover {
+            background-color: #252525;
+            border-color: #777;
+        }
+        #infoGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            width: 100%;
+            overflow-y: auto;
+            padding: 15px 0;
+        }
+        .info-box {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            font-size: 0.9em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #bb86fc;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .content {
+            word-break: break-word;
+            max-height: 150px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #3700b3;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.3s ease;
+        }
+        .copy-button:hover {
+            background-color: #5600e8;
+        }
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #03dac6;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: none;
+            font-weight: 500;
+        }
+        #fileInput {
+            display: none;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        #backButton, #saveButton {
+            background-color: #3700b3;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 1em;
+        }
+        #backButton:hover, #saveButton:hover {
+            background-color: #5600e8;
+        }
+        #imagePreview {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+
+        #imagePreview {
+    cursor: pointer;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    padding-top: 50px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9);
+}
+
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 1000px;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    h1 {
+        margin-bottom: 10px;
+        font-size: 1.2em;
+    }
+    
+    #languageSelect {
+        align-self: flex-end;
+    }
+    
+    #dropZone {
+        height: 150px;
+        font-size: 0.9em;
+    }
+    
+    #infoGrid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-box {
+        padding: 10px;
+    }
+    
+    .info-box h3 {
+        font-size: 1em;
+    }
+    
+    .content {
+        font-size: 0.9em;
+    }
+    
+    .copy-button {
+        font-size: 0.7em;
+        padding: 3px 6px;
+    }
+    
+    .button-container {
+        flex-direction: column;
+    }
+    
+    #backButton, #saveButton {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    #imagePreview {
+        max-height: 150px;
+    }
+}
+
+@media (hover: none) {
+    #dropZone:hover {
+        background-color: #1e1e1e;
+        border-color: #555;
+    }
+    
+    .copy-button:hover {
+        background-color: #3700b3;
+    }
+    
+    #backButton:hover, #saveButton:hover {
+        background-color: #3700b3;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    body, html {
+        height: auto;
+        overflow: auto;
+    }
+
+    .container {
+        min-height: auto;
+    }
+
+    #mainContainer, #infoContainer {
+        flex: none;
+    }
+
+    #infoGrid {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .content {
+        max-height: none;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#dropZone {
+    transition: all 0.3s ease;
+}
+
+#dropZone:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(187, 134, 252, 0.3);
+}
+
+.info-box {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.copy-button {
+    transition: all 0.2s ease;
+}
+
+.copy-button:active {
+    transform: scale(0.95);
+}
+
+.modal {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+}
+
+.modal-content {
+    transform: scale(0.7);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>NovelAI Image Metadata Extractor</h1>
+            <select id="languageSelect">
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+            </select>
+        </header>
+        
+        <div id="mainContainer">
+            <div id="dropZone">
+                ここをクリックしてファイルを選択するか、<br>
+                画像ファイルをドラッグ&ドロップしてください
+            </div>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+        
+        <div id="infoContainer" style="display: none;">
+            <img id="imagePreview" src="" alt="画像プレビュー">
+            <div id="infoGrid">
+                <div id="positivePrompt" class="info-box">
+                    <h3>プロンプト</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="positivePrompt">コピー</button>
+                </div>
+                <div id="negativePrompt" class="info-box">
+                    <h3>ネガティブプロンプト</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="negativePrompt">コピー</button>
+                </div>
+                <div id="steps" class="info-box">
+                    <h3>ステップ数</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="steps">コピー</button>
+                </div>
+                <div id="size" class="info-box">
+                    <h3>画像サイズ</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="size">コピー</button>
+                </div>
+                <div id="scale" class="info-box">
+                    <h3>正確度</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="scale">コピー</button>
+                </div>
+                <div id="seed" class="info-box">
+                    <h3>シード値</h3>
+                    <div class="content"></div>
+                    <button class="copy-button" data-target="seed">コピー</button>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="saveButton">情報を保存</button>
+                <button id="backButton">画像選択に戻る</button>
+            </div>
+        </div>
+    </div>
+    <div id="notification">コピーしました</div>
+
+    
+
+    <script>
+
+
+
+        const translations = {
+            ja: {
+                dropZoneText: "ここをクリックしてファイルを選択するか、\n画像ファイルをドラッグ&ドロップしてください",
+                promptTitle: "プロンプト",
+                negativePromptTitle: "ネガティブプロンプト",
+                stepsTitle: "ステップ数",
+                sizeTitle: "画像サイズ",
+                scaleTitle: "正確度",
+                seedTitle: "シード値",
+                saveButtonText: "情報を保存",
+                backButtonText: "画像選択に戻る",
+                copyText: "コピー",
+                notificationText: "コピーしました",
+                fileErrorText: "対応している画像ファイルを選択してください。",
+                readErrorText: "ファイルの読み込み中にエラーが発生しました。"
+            },
+            en: {
+                dropZoneText: "Click here to select a file or\ndrag & drop an image file",
+                promptTitle: "Prompt",
+                negativePromptTitle: "Negative Prompt",
+                stepsTitle: "Steps",
+                sizeTitle: "Image Size",
+                scaleTitle: "Scale",
+                seedTitle: "Seed",
+                saveButtonText: "Save Information",
+                backButtonText: "Back to Image Selection",
+                copyText: "Copy",
+                notificationText: "Copied",
+                fileErrorText: "Please select a supported image file.",
+                readErrorText: "An error occurred while reading the file."
+            }
+        };
+
+        function updateLanguage(lang) {
+            document.getElementById('dropZone').innerText = translations[lang].dropZoneText;
+            document.querySelector('#positivePrompt h3').innerText = translations[lang].promptTitle;
+            document.querySelector('#negativePrompt h3').innerText = translations[lang].negativePromptTitle;
+            document.querySelector('#steps h3').innerText = translations[lang].stepsTitle;
+            document.querySelector('#size h3').innerText = translations[lang].sizeTitle;
+            document.querySelector('#scale h3').innerText = translations[lang].scaleTitle;
+            document.querySelector('#seed h3').innerText = translations[lang].seedTitle;
+            document.getElementById('saveButton').innerText = translations[lang].saveButtonText;
+            document.getElementById('backButton').innerText = translations[lang].backButtonText;
+            document.querySelectorAll('.copy-button').forEach(button => {
+                button.innerText = translations[lang].copyText;
+            });
+            notification.innerText = translations[lang].notificationText;
+        }
+
+        document.getElementById('languageSelect').addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+        });
+
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => resolve(event.target.result);
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        function extractInfo(text) {
+            const positivePromptMatch = text.match(/"prompt"\s*:\s*"((?:\\.|[^"\\])*?)"/);
+            const negativePromptMatch = text.match(/"uc"\s*:\s*"((?:\\.|[^"\\])*?)"/);
+            const stepsMatch = text.match(/"steps"\s*:\s*(\d+)/);
+            const heightMatch = text.match(/"height"\s*:\s*(\d+)/);
+            const widthMatch = text.match(/"width"\s*:\s*(\d+)/);
+            const scaleMatch = text.match(/"scale"\s*:\s*(\d+(?:\.\d+)?)/);
+            const seedMatch = text.match(/"seed"\s*:\s*(\d+)/);
+            
+            return {
+                positive: positivePromptMatch ? JSON.parse(`"${positivePromptMatch[1]}"`) : '不明',
+                negative: negativePromptMatch ? JSON.parse(`"${negativePromptMatch[1]}"`) : '不明',
+                steps: stepsMatch ? parseInt(stepsMatch[1]) : '不明',
+                height: heightMatch ? parseInt(heightMatch[1]) : '不明',
+                width: widthMatch ? parseInt(widthMatch[1]) : '不明',
+                scale: scaleMatch ? parseFloat(scaleMatch[1]) : '不明',
+                seed: seedMatch ? parseInt(seedMatch[1]) : '不明'
+            };
+        }
+        
+
+        const mainContainer = document.getElementById('mainContainer');
+        const infoContainer = document.getElementById('infoContainer');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const backButton = document.getElementById('backButton');
+        const notification = document.getElementById('notification');
+        const saveButton = document.getElementById('saveButton');
+
+        function handleFile(file) {
+    if (file && file.type.startsWith('image/')) {
+        const imageUrl = URL.createObjectURL(file);
+        imagePreview.src = imageUrl;
+
+        readFileAsText(file).then(fileContent => {
+            const info = extractInfo(fileContent);
+            document.querySelector('#positivePrompt .content').textContent = info.positive;
+            document.querySelector('#negativePrompt .content').textContent = info.negative;
+            document.querySelector('#steps .content').textContent = info.steps;
+            document.querySelector('#size .content').textContent = `${info.width} x ${info.height}`;
+            document.querySelector('#scale .content').textContent = info.scale;
+            document.querySelector('#seed .content').textContent = info.seed;
+
+            mainContainer.style.display = 'none';
+            infoContainer.style.display = 'flex';
+          
+            setTimeout(() => {
+                document.querySelectorAll('.info-box').forEach(box => {
+                    box.style.opacity = '1';
+                });
+            }, 50);
+        }).catch(error => {
+            console.error('Error reading file:', error);
+            alert(translations[document.getElementById('languageSelect').value].readErrorText);
+        });
+    } else {
+        alert(translations[document.getElementById('languageSelect').value].fileErrorText);
+    }
+}
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                handleFile(file);
+            });
+        }
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleFiles(e.dataTransfer.files);
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        backButton.addEventListener('click', () => {
+            mainContainer.style.display = 'flex';
+            infoContainer.style.display = 'none';
+            imagePreview.src = '';
+            fileInput.value = '';
+        });
+
+        document.querySelectorAll('.copy-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const target = button.getAttribute('data-target');
+                const content = document.querySelector(`#${target} .content`).textContent;
+                navigator.clipboard.writeText(content).then(() => {
+                    notification.style.display = 'block';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 2000);
+                });
+            });
+        });
+
+        function saveInformation() {
+    const info = {
+        positive: document.querySelector('#positivePrompt .content').textContent,
+        negative: document.querySelector('#negativePrompt .content').textContent,
+        steps: document.querySelector('#steps .content').textContent,
+        size: document.querySelector('#size .content').textContent,
+        scale: document.querySelector('#scale .content').textContent,
+        seed: document.querySelector('#seed .content').textContent
+    };
+    
+    const blob = new Blob([JSON.stringify(info, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+
+    const now = new Date();
+    const fileName = now.getFullYear() +
+                     ('0' + (now.getMonth() + 1)).slice(-2) +
+                     ('0' + now.getDate()).slice(-2) + 
+                     ('0' + now.getHours()).slice(-2) +
+                     ('0' + now.getMinutes()).slice(-2) +
+                     '.json';
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+}
+
+        saveButton.addEventListener('click', saveInformation);
+
+        updateLanguage('ja');
+
+        const modal = document.getElementById('imageModal');
+const modalImg = document.getElementById('modalImage');
+const closeBtn = document.getElementsByClassName('close')[0];
+
+imagePreview.addEventListener('click', function() {
+    modal.style.display = "block";
+    modalImg.src = this.src;
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+});
+
+function closeModal() {
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = "none";
+    }, 300);
+}
+
+closeBtn.addEventListener('click', closeModal);
+
+window.addEventListener('click', function(event) {
+    if (event.target == modal) {
+        closeModal();
+    }
+});
+
+closeBtn.addEventListener('click', function() {
+    modal.style.display = "none";
+});
+
+window.addEventListener('click', function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+});
+
+dropZone.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+}, false);
+
+dropZone.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+}, false);
+
+dropZone.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    if (e.changedTouches && e.changedTouches.length) {
+        const touch = e.changedTouches[0];
+        const files = touch.target.files;
+        if (files && files.length) {
+            handleFiles(files);
+        }
+    }
+}, false);
+        
+    </script>
+</body>
+</html>
