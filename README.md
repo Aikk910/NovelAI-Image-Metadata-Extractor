@@ -2,6 +2,8 @@
 
 このツールは、NovelAIで生成された画像からメタデータを抽出し、表示するためのウェブアプリケーションです。
 
+https://aikk910.github.io/NovelAI-Image-Metadata-Extractor/
+
 ## 主な機能
 
 1. **画像アップロード**:
