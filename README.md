@@ -1,0 +1,1 @@
+# NovelAI-Image-Metadata-Extractor
