@@ -338,6 +338,31 @@
     transform: scale(1);
 }
 
+        /* モバイル向けの追加スタイル */
+        @media screen and (max-width: 768px) {
+            #dropZone {
+                touch-action: none;
+                -webkit-tap-highlight-color: transparent;
+                cursor: pointer;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            
+            .mobile-upload-button {
+                display: block;
+                width: 100%;
+                max-width: 200px;
+                margin: 10px auto;
+                padding: 12px 20px;
+                background-color: #3700b3;
+                color: #fff;
+                border: none;
+                border-radius: 4px;
+                font-size: 1em;
+                cursor: pointer;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -669,6 +694,90 @@ dropZone.addEventListener('touchend', function(e) {
     }
 }, false);
         
+
+ // モバイルでのタッチイベント処理を修正
+ function initializeMobileHandling() {
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                // モバイル用のアップロードボタンを追加
+                const mobileUploadButton = document.createElement('button');
+                mobileUploadButton.className = 'mobile-upload-button';
+                mobileUploadButton.textContent = '画像を選択';
+                dropZone.appendChild(mobileUploadButton);
+                
+                // タッチイベントの処理を単純化
+                dropZone.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    fileInput.click();
+                });
+                
+                // 不要なタッチイベントを削除
+                dropZone.removeEventListener('touchstart', preventDefault);
+                dropZone.removeEventListener('touchmove', preventDefault);
+                dropZone.removeEventListener('touchend', preventDefault);
+            }
+        }
+
+        // 初期化時にモバイル対応処理を実行
+        document.addEventListener('DOMContentLoaded', initializeMobileHandling);
+
+        // ファイル選択時の処理を改善
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFiles(e.target.files);
+            }
+        });
+
+        // エラーハンドリングの改善
+        function handleFile(file) {
+            if (!file) {
+                console.error('No file selected');
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert(translations[document.getElementById('languageSelect').value].fileErrorText);
+                return;
+            }
+
+            const imageUrl = URL.createObjectURL(file);
+            imagePreview.src = imageUrl;
+
+            readFileAsText(file).then(fileContent => {
+                try {
+                    const info = extractInfo(fileContent);
+                    updateUIWithInfo(info);
+                    showInfoContainer();
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    alert(translations[document.getElementById('languageSelect').value].readErrorText);
+                }
+            }).catch(error => {
+                console.error('Error reading file:', error);
+                alert(translations[document.getElementById('languageSelect').value].readErrorText);
+            });
+        }
+
+        function updateUIWithInfo(info) {
+            document.querySelector('#positivePrompt .content').textContent = info.positive;
+            document.querySelector('#negativePrompt .content').textContent = info.negative;
+            document.querySelector('#steps .content').textContent = info.steps;
+            document.querySelector('#size .content').textContent = `${info.width} x ${info.height}`;
+            document.querySelector('#scale .content').textContent = info.scale;
+            document.querySelector('#seed .content').textContent = info.seed;
+        }
+
+        function showInfoContainer() {
+            mainContainer.style.display = 'none';
+            infoContainer.style.display = 'flex';
+            setTimeout(() => {
+                document.querySelectorAll('.info-box').forEach(box => {
+                    box.style.opacity = '1';
+                });
+            }, 50);
+        }
+
     </script>
 </body>
 </html>
